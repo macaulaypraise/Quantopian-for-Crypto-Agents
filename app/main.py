@@ -11,4 +11,4 @@ async def health_check():
     return {"status": "online", "mode": "Track 2 (Stateless)"}
 
 # To run the server during development:
-# uv run uvicorn main:app --reload
+# uv run uvicorn app.main:app --reload

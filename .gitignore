@@ -1,0 +1,23 @@
+# Environments
+.venv/
+env/
+venv/
+
+# Python caches & build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Secrets and Configs
+.env
+.env.local
+secrets.json
+
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/

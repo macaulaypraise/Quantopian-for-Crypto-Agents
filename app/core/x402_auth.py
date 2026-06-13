@@ -37,5 +37,5 @@ async def verify_x402_payment(
             detail="Invalid payment receipt format. Must be a valid BNB Chain TX Hash."
         )
 
-    print(f"✅ x402 Payment Verified! TX: {x_payment_receipt}")
+    print(f"x402 Payment Verified! TX: {x_payment_receipt}")
     return x_payment_receipt

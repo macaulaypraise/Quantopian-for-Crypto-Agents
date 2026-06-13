@@ -48,7 +48,7 @@ async def fetch_market_data() -> List[Dict]:
 
     except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
         # HARD FALLBACK: Ensures the pipeline survives network/rate-limit failures
-        print("⚠️ CMC API unreachable or key missing. Using synthetic whitelist data.")
+        print("CMC API unreachable or key missing. Using synthetic whitelist data.")
         return _generate_synthetic_market_data()
 
 def _generate_synthetic_market_data() -> List[Dict]:

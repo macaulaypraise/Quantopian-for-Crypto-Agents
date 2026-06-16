@@ -21,3 +21,4 @@ secrets.json
 .DS_Store
 .vscode/
 .idea/
+.agent-data/

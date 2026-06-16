@@ -1,4 +1,5 @@
 import uuid
+import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -11,10 +12,17 @@ from app.core.schemas import (
 )
 from app.core.x402_auth import verify_x402_payment
 from app.services.cmc_client import fetch_market_data
-from app.quant.sdme_engine import compute_sdme_allocations, generate_execution_rules
 from app.quant.backtester import run_digital_twin_simulation
 
+from app.services.cmc_mcp_client import CMCMCPClient
+# Import only the class and the rules generator. No redundant functions.
+from app.quant.sdme_engine import SDMEEngine, generate_execution_rules
+
 router = APIRouter()
+
+# Instantiate the upgraded clients globally
+cmc_mcp_client = CMCMCPClient(api_key=os.getenv("CMC_MCP_API_KEY", "demo_mode"))
+oop_engine = SDMEEngine()
 
 @router.post("/skill/generate_strategy", response_model=StrategySpecification)
 async def generate_strategy(
@@ -26,37 +34,45 @@ async def generate_strategy(
     Requires a valid x402 payment receipt header to execute the quant engine.
     """
     try:
-        # 1. Data Hydration: Fetch live (or fallback synthetic) CMC data
-        market_data = await fetch_market_data()
+        # UPGRADE PATH: Execute the new Agent Hub MCP client and OOP engine natively
+        whitelist = getattr(intent, 'whitelist', ["BTC", "ETH", "BNB"])
+        live_data = await cmc_mcp_client.get_live_data_async(whitelist)
+        return oop_engine.generate_spec(intent, live_data)
 
-        # 2. Alpha Generation: Run the math engine to get proportional allocations
-        allocations = compute_sdme_allocations(market_data, max_assets=4)
+    except Exception as mcp_err:
+        print(f"MCP Hub Strategy generation skipped, executing original working pipeline... ({mcp_err})")
 
-        # 3. Digital Twin: Simulate the portfolio against historical paths
-        simulation_results = run_digital_twin_simulation(allocations, window_days=30)
+        try:
+            # 1. Data Hydration: Fetch live (or fallback synthetic) CMC data
+            market_data = await fetch_market_data()
 
-        # 4. JSON Contract: Construct the strictly validated Pydantic response
-        strategy_spec = StrategySpecification(
-            strategy_spec_id=f"NCAE-SDME-{uuid.uuid4().hex[:8].upper()}",
-            generated_at=datetime.now(timezone.utc),
-            name="Sentiment-Divergence Momentum",
-            target_universe="CMC_BEP20_WHITELIST",
-            rebalance_frequency="12H",
-            execution_rules=ExecutionRules(**generate_execution_rules()),
-            risk_management=RiskManagement(
-                max_asset_weight=0.50,
-                # Converts the user's integer intent (e.g., 15) to a float percentage (0.15)
-                portfolio_drawdown_limit=intent.max_drawdown / 100.0,
-                base_currency="USDT"
-            ),
-            current_target_allocation=allocations,
-            simulation_metrics=SimulationMetrics(**simulation_results)
-        )
+            # 2. Alpha Generation: Native call to the unified OOP engine
+            allocations = oop_engine.compute_allocations(market_data, max_assets=4)
 
-        return strategy_spec
+            # 3. Digital Twin: Simulate the portfolio against historical paths
+            simulation_results = run_digital_twin_simulation(allocations, window_days=30)
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Quant Engine Execution Failed: {str(e)}"
-        )
+            # 4. JSON Contract: Construct the strictly validated Pydantic response
+            strategy_spec = StrategySpecification(
+                strategy_spec_id=f"NCAE-SDME-{uuid.uuid4().hex[:8].upper()}",
+                generated_at=datetime.now(timezone.utc),
+                name="Sentiment-Divergence Momentum",
+                target_universe="CMC_BEP20_WHITELIST",
+                rebalance_frequency="12H",
+                execution_rules=ExecutionRules(**generate_execution_rules()),
+                risk_management=RiskManagement(
+                    max_asset_weight=0.50,
+                    portfolio_drawdown_limit=intent.max_drawdown / 100.0,
+                    base_currency="USDT"
+                ),
+                current_target_allocation=allocations,
+                simulation_metrics=SimulationMetrics(**simulation_results)
+            )
+
+            return strategy_spec
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Quant Engine Execution Failed: {str(e)}"
+            )

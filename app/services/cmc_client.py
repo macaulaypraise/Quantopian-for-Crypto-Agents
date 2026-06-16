@@ -1,10 +1,10 @@
-import os
 import httpx
 import random
 from typing import List, Dict
+from app.core.config import settings
 
 CMC_API_URL = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
-CMC_API_KEY = os.getenv("CMC_API_KEY", "demo_mode")
+CMC_API_KEY = settings.CMC_API_KEY
 
 # A truncated subset of the 149 official hackathon BEP-20 whitelist for the simulation
 WHITELISTED_TICKERS = [

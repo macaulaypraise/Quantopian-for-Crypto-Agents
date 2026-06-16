@@ -1,8 +1,9 @@
 from fastapi import Header, HTTPException, Request
+from app.core.config import settings
 
-# The wallet address where the strategy engine collects its 0.50 USDC fee
-MERCHANT_WALLET_ADDRESS = "0xYourBNBChainMerchantWalletAddressHere"
-REQUIRED_PAYMENT_AMOUNT = "0.50 USDC"
+# The wallet address where the strategy engine collects its fee
+MERCHANT_WALLET_ADDRESS = settings.MERCHANT_WALLET_ADDRESS
+REQUIRED_PAYMENT_AMOUNT = settings.REQUIRED_PAYMENT_AMOUNT
 
 async def verify_x402_payment(
     request: Request,

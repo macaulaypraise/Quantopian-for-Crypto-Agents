@@ -47,7 +47,7 @@ def run_autonomous_agent_loop():
             # STEP 4: Re-submit the exact payload with the cryptographic invoice receipt
             print("📡 [Client Agent]: Re-submitting request with verified 'x-payment-receipt' header...")
             headers = {"x-payment-receipt": mock_tx_hash}
-            success_response = client.post(SERVER_URL, json=payload, headers=headers)
+            success_response = client.post(SERVER_URL, json=payload, headers=headers, timeout=300.0)
 
             if success_response.status_code == 200:
                 strategy_spec = success_response.json()

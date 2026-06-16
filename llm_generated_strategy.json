@@ -1,0 +1,34 @@
+{
+  "strategy_spec_id": "LLM-VOL-BREAKOUT-001",
+  "generated_at": "2026-06-16T14:00:00Z",
+  "name": "LLM Volume Breakout Strategy",
+  "target_universe": "CMC_BEP20_WHITELIST",
+  "rebalance_frequency": "12H",
+  "execution_rules": {
+    "entry_logic": {
+      "condition_1": "volume_24h > 2.0 * avg_volume_30d",
+      "condition_2": "price > 200_day_MA",
+      "action": "buy"
+    },
+    "exit_logic": {
+      "condition_1": "volume_24h < 1.0 * avg_volume_30d",
+      "condition_2": "stop_loss_triggered",
+      "action": "sell"
+    }
+  },
+  "risk_management": {
+    "max_asset_weight": 0.4,
+    "portfolio_drawdown_limit": 0.12,
+    "base_currency": "USDT"
+  },
+  "current_target_allocation": {
+    "BTC": 0.6,
+    "ETH": 0.4
+  },
+  "simulation_metrics": {
+    "backtest_window_days": 30,
+    "simulated_sharpe_ratio": 0.95,
+    "max_drawdown_observed": 0.11,
+    "win_rate": 0.55
+  }
+}
